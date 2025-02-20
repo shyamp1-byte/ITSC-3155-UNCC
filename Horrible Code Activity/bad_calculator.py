@@ -6,15 +6,15 @@ x = input("Enter first number: ")
 y = input("Enter second number: ")
 
 # No function reuse, repeated logic
-operation = input("Enter operation (x, -, *, /: ")
+operator = input("Enter operation (x, -, *, /: ")
 
-if operation == "+":
+if operator == "+":
     print("Result: ", float(x) + float(y))
-elif operation == "-":
+elif operator == "-":
     print("Result: ", float(x) - float(y))
-elif operation == "*":
+elif operator == "*":
     print("Result: ", float(x) * float(y))
-elif operation == "/":
+elif operator == "/":
     print("Result: ", float(x) / float(y))
 else:
     print("Invalid operation")
