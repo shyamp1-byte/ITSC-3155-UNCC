@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import models, schemas
-from .controllers import orders
+from .controllers import orders, sandwiches
 from .dependencies.database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
@@ -53,3 +53,32 @@ def delete_one_order(order_id: int, db: Session = Depends(get_db)):
     if order is None:
         raise HTTPException(status_code=404, detail="User not found")
     return orders.delete(db=db, order_id=order_id)
+
+@app.post("/sandwiches/", response_model=schemas.Sandwich, tags=["Sandwiches"])
+def create_sandwich_endpoint(sandwich: schemas.SandwichCreate, db: Session = Depends(get_db)):
+    return sandwiches.create_sandwich(db=db, sandwich=sandwich)
+
+@app.get("/sandwiches/", response_model=list[schemas.Sandwich], tags=["Sandwiches"])
+def get_sandwiches_endpoint(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return sandwiches.get_sandwiches(db=db, skip=skip, limit=limit)
+
+@app.get("/sandwiches/{sandwich_id}", response_model=schemas.Sandwich, tags=["Sandwiches"])
+def get_sandwich_endpoint(sandwich_id: int, db: Session = Depends(get_db)):
+    sandwich = sandwiches.get_sandwich(db=db, sandwich_id=sandwich_id)
+    if sandwich is None:
+        raise HTTPException(status_code=404, detail="Sandwich not found")
+    return sandwich
+
+@app.put("/sandwiches/{sandwich_id}", response_model=schemas.Sandwich, tags=["Sandwiches"])
+def update_sandwich_endpoint(sandwich_id: int, sandwich: schemas.SandwichUpdate, db: Session = Depends(get_db)):
+    sandwich_db = sandwiches.get_sandwich(db=db, sandwich_id=sandwich_id)
+    if sandwich_db is None:
+        raise HTTPException(status_code=404, detail="Sandwich not found")
+    return sandwiches.update_sandwich(db=db, sandwich=sandwich, sandwich_id=sandwich_id)
+
+@app.delete("/sandwiches/{sandwich_id}", tags=["Sandwiches"])
+def delete_sandwich_endpoint(sandwich_id: int, db: Session = Depends(get_db)):
+    sandwich = sandwiches.get_sandwich(db=db, sandwich_id=sandwich_id)
+    if sandwich is None:
+        raise HTTPException(status_code=404, detail="Sandwich not found")
+    return sandwiches.delete_sandwich(db=db, sandwich_id=sandwich_id)
