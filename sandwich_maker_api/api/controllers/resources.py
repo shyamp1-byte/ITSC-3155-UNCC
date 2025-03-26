@@ -1,33 +1,32 @@
 from sqlalchemy.orm import Session
-from ..models import models, schemas
+from fastapi import HTTPException, status, Response
+from ..models.models import models, schemas
 
-def create_resource(db: Session, resource: schemas.ResourceCreate):
-    db_resource = models.Resource(**resource.dict())
+def create(db: Session, resource):
+    db_resource = models.Resource(
+        item=resource.item,
+        amount=resource.amount
+    )
     db.add(db_resource)
     db.commit()
     db.refresh(db_resource)
     return db_resource
 
-def get_resources(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Resource).offset(skip).limit(limit).all()
+def read_all(db: Session):
+    return db.query(models.Resource).all()
 
-def get_resource(db: Session, resource_id: int):
+def read_one(db: Session, resource_id):
     return db.query(models.Resource).filter(models.Resource.id == resource_id).first()
 
-def update_resource(db: Session, resource: schemas.ResourceUpdate, resource_id: int):
-    db_resource = db.query(models.Resource).filter(models.Resource.id == resource_id).first()
-    if db_resource:
-        for key, value in resource.dict(exclude_unset=True).items():
-            setattr(db_resource, key, value)
-        db.commit()
-        db.refresh(db_resource)
-        return db_resource
-    return None
+def update(db: Session, resource_id, resource):
+    db_resource = db.query(models.Resource).filter(models.Resource.id == resource_id)
+    update_data = resource.model_dump(exclude_unset=True)
+    db_resource.update(update_data, synchronize_session=False)
+    db.commit()
+    return db_resource.first()
 
-def delete_resource(db: Session, resource_id: int):
-    db_resource = db.query(models.Resource).filter(models.Resource.id == resource_id).first()
-    if db_resource:
-        db.delete(db_resource)
-        db.commit()
-        return db_resource
-    return None
+def delete(db: Session, resource_id):
+    db_resource = db.query(models.Resource).filter(models.Resource.id == resource_id)
+    db_resource.delete(synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
