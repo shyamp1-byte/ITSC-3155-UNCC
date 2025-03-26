@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import models, schemas
-from .controllers import orders, sandwiches
+from .controllers import orders, sandwiches, resources
 from .dependencies.database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
@@ -54,6 +54,7 @@ def delete_one_order(order_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return orders.delete(db=db, order_id=order_id)
 
+
 @app.post("/sandwiches/", response_model=schemas.Sandwich, tags=["Sandwiches"])
 def create_sandwich_endpoint(sandwich: schemas.SandwichCreate, db: Session = Depends(get_db)):
     return sandwiches.create_sandwich(db=db, sandwich=sandwich)
@@ -82,3 +83,33 @@ def delete_sandwich_endpoint(sandwich_id: int, db: Session = Depends(get_db)):
     if sandwich is None:
         raise HTTPException(status_code=404, detail="Sandwich not found")
     return sandwiches.delete_sandwich(db=db, sandwich_id=sandwich_id)
+
+
+@app.post("/resources/", response_model=schemas.Resource, tags=["Resources"])
+def create_resource_endpoint(resource: schemas.ResourceCreate, db: Session = Depends(get_db)):
+    return resources.create_resource(db=db, resource=resource)
+
+@app.get("/resources/", response_model=list[schemas.Resource], tags=["Resources"])
+def get_resources_endpoint(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return resources.get_resources(db=db, skip=skip, limit=limit)
+
+@app.get("/resources/{resource_id}", response_model=schemas.Resource, tags=["Resources"])
+def get_resource_endpoint(resource_id: int, db: Session = Depends(get_db)):
+    resource = resources.get_resource(db=db, resource_id=resource_id)
+    if resource is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return resource
+
+@app.put("/resources/{resource_id}", response_model=schemas.Resource, tags=["Resources"])
+def update_resource_endpoint(resource_id: int, resource: schemas.ResourceUpdate, db: Session = Depends(get_db)):
+    resource_db = resources.get_resource(db=db, resource_id=resource_id)
+    if resource_db is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return resources.update_resource(db=db, resource=resource, resource_id=resource_id)
+
+@app.delete("/resources/{resource_id}", tags=["Resources"])
+def delete_resource_endpoint(resource_id: int, db: Session = Depends(get_db)):
+    resource = resources.get_resource(db=db, resource_id=resource_id)
+    if resource is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return resources.delete_resource(db=db, resource_id=resource_id)
